@@ -310,7 +310,7 @@ async function ocrBase64(base64) {
 
   setOcrBusy(true);
 
-  try {
+   try {
     const response = await fetch(
       `https://vision.googleapis.com/v1/images:annotate?key=${GOOGLE_API_KEY}`,
       {
@@ -318,15 +318,14 @@ async function ocrBase64(base64) {
         body: JSON.stringify({
           requests: [
             {
-              image: { content: base64Image },
-              features: [{ type: "TEXT_DETECTION" }],
+              image: { content: base64 },
+              features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
               imageContext: { languageHints: ["ja"] }
             }
           ]
         })
       }
     );
-
     const data = await response.json();
     if (!data.responses || !data.responses[0].fullTextAnnotation) {
       alert("OCRに失敗しました。");
