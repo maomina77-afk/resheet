@@ -141,7 +141,8 @@
                 // 保存されているAPIキーを読み込む
                 apiKey = await localforage.getItem('visionApiKey');
                 if (apiKey) {
-                    apiKeyInput.value = apiKey;
+                    apiKeyInput.placeholder = '【＊＊＊＊＊＊】変更する場合のみ入力';
+                    apiKeyInput.value = ''; // セキュリティのため実際のキーは表示しない
                     showMainArea();
                 } else {
                     showSetupArea();
@@ -192,15 +193,25 @@
         }
 
         // --- 設定画面のイベント ---
-        navSettingsBtn.addEventListener('click', showSetupArea);
+        navSettingsBtn.addEventListener('click', () => {
+            apiKeyInput.value = ''; // 開くたびにクリアしておく
+            showSetupArea();
+        });
         
         cancelSettingsBtn.addEventListener('click', () => {
-            apiKeyInput.value = apiKey; // 元に戻す
+            apiKeyInput.value = ''; // 入力中の文字をクリアして戻る
             showMainArea();
         });
 
         saveKeyBtn.addEventListener('click', async () => {
             const val = apiKeyInput.value.trim();
+            
+            // 未入力で、すでに保存済みのキーがある場合はそのまま戻る
+            if (!val && apiKey) {
+                showMainArea();
+                return;
+            }
+
             if (!val) {
                 showError("APIキーを入力してください。");
                 return;
@@ -208,6 +219,8 @@
             try {
                 await localforage.setItem('visionApiKey', val);
                 apiKey = val;
+                apiKeyInput.placeholder = '【＊＊＊＊＊＊】変更する場合のみ入力';
+                apiKeyInput.value = ''; // 保存後は入力をクリア
                 showMainArea();
             } catch (err) {
                 showError("APIキーの保存に失敗しました。");
