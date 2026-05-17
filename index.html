@@ -1,319 +1,253 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>レシートOCR</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<!-- Cropper.js -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
-<style>
-  body {
-    font-family: "Segoe UI", sans-serif;
-    background: #f2f4f7;
-    margin: 0;
-    padding: 12px;
-  }
-
-  h1 {
-    text-align: center;
-    font-size: 22px;
-    margin-bottom: 16px;
-    color: #333;
-  }
-
-  .card {
-    background: #fff;
-    padding: 16px;
-    margin-bottom: 16px;
-    border-radius: 12px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-  }
-
-  button {
-    width: 100%;
-    padding: 14px;
-    margin: 6px 0;
-    font-size: 17px;
-    border: none;
-    border-radius: 8px;
-    background: #1976d2;
-    color: #fff;
-    font-weight: bold;
-  }
-
-  button.secondary { background:#555; }
-  button.danger { background:#d32f2f; }
-
-  input {
-    width: 100%;
-    padding: 10px;
-    font-size: 16px;
-    margin: 6px 0;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-  }
-
-  #cameraContainer {
-    position: relative;
-    width: 100%;
-  }
-
-  #video {
-    width: 100%;
-    border-radius: 10px;
-    background: #000;
-  }
-
-  #zoomAreaCamera {
-    position:absolute;
-    top:10px;
-    right:10px;
-    visibility:hidden;
-    opacity:0;
-    pointer-events:none;
-    z-index:20;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-  }
-
-  #zoomAreaPreview {
-    position:absolute;
-    top:10px;
-    right:10px;
-    visibility:hidden;
-    opacity:0;
-    pointer-events:none;
-    z-index:10000;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-  }
-
-  .zoomLabel {
-    background: rgba(0,0,0,0.6);
-    color: #fff;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    margin-bottom: 6px;
-  }
-
-  .zoomSlider {
-    writing-mode: bt-lr;
-    -webkit-appearance: slider-vertical;
-    appearance: slider-vertical;
-    width: 30px;
-    height: 180px;
-  }
-
-  #previewArea {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #000;
-    z-index: 9998;
-  }
-
-  #previewContainer {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    padding-bottom: 120px;
-  }
-
-  #previewImage {
-    max-width: 100%;
-    max-height: 100%;
-    display: block;
-    margin: auto;
-  }
-
-  #previewButtons {
-    position: fixed;
-    bottom: 20px;
-    width: 100%;
-    display: flex;
-    gap: 10px;
-    padding: 0 20px;
-    box-sizing: border-box;
-  }
-
-  .history-item {
-    margin-bottom: 16px;
-    padding: 8px;
-    border-radius: 8px;
-    border: 1px solid #ddd;
-    background: #fff;
-  }
-
-  .history-item img {
-    width: 100%;
-    max-width: 320px;
-    border-radius: 6px;
-    display: block;
-    margin-top: 4px;
-  }
-
-  #editOverlay {
-    position: fixed;
-    left: 0;
-    bottom: -80vh;
-    width: 100%;
-    background: rgba(255,255,255,0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 20px rgba(0,0,0,0.25);
-    padding: 12px 16px 16px;
-    box-sizing: border-box;
-    transition: bottom 0.25s ease-out;
-    max-height: 80vh;
-    z-index: 9999;
-    display: flex;
-    flex-direction: column;
-  }
-
-  #editText {
-    flex: 1;
-    width: 100%;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    padding: 8px;
-    font-size: 14px;
-    resize: none;
-    white-space: pre-wrap;
-  }
-
-  .cropper-point {
-    width: 40px !important;
-    height: 40px !important;
-    background: rgba(255,255,255,0.9) !important;
-    border: 2px solid #1976d2 !important;
-    border-radius: 8px !important;
-    opacity: 1 !important;
-  }
-
-  .cropper-point::after {
-    content: "";
-    position: absolute;
-    left: -20px;
-    top: -20px;
-    width: 80px;
-    height: 80px;
-  }
-
-  .cropper-crop-box,
-  .cropper-view-box {
-    border: 3px solid #1976d2 !important;
-  }
-
-  .cropper-dashed {
-    border-color: rgba(255,255,255,0.4) !important;
-  }
-</style>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レシート読み取りアプリ</title>
+    <!-- Tailwind CSSの読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tesseract.js (OCRライブラリ) の読み込み -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        /* 読み込み中のアニメーション */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
 
-<h1>レシートOCR</h1>
+<div class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+    
+    <!-- ヘッダー -->
+    <header class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2 flex justify-center items-center gap-2">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            スマートレシートリーダー
+        </h1>
+        <p class="text-sm text-gray-500">画像やカメラからレシートの文字を自動で読み取ります</p>
+    </header>
 
-<div class="card">
-  <h2>① APIキー設定</h2>
-  <input type="password" id="apiKeyInput" placeholder="Google Vision APIキーを入力">
-  <button id="setApiKey">APIキーを設定</button>
-</div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h2 class="font-semibold text-gray-700">1. レシート画像を選択</h2>
+            </div>
+            
+            <div class="p-6 flex-grow flex flex-col gap-4">
+                <!-- ファイル入力ボタン (スマホのカメラ起動にも対応) -->
+                <label for="imageInput" class="cursor-pointer group flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors">
+                    <svg class="w-10 h-10 text-blue-500 mb-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span class="text-sm font-medium text-blue-700">カメラで撮影 or 画像を選ぶ</span>
+                    <input type="file" id="imageInput" accept="image/*" class="hidden">
+                </label>
 
-<div class="card">
-  <h2>② カメラ撮影</h2>
+                <!-- 画像プレビュー領域 -->
+                <div id="previewContainer" class="hidden relative w-full h-64 md:h-80 bg-gray-100 rounded-xl overflow-hidden border border-gray-200">
+                    <img id="imagePreview" src="" alt="プレビュー" class="w-full h-full object-contain">
+                </div>
+                
+                <!-- 解析開始ボタン -->
+                <button id="startOcrBtn" disabled class="w-full py-3 px-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-auto">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    文字を読み取る
+                </button>
+            </div>
+        </div>
 
-  <button id="start">カメラ起動</button>
-  <button id="capture">撮影してOCR</button>
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col h-full">
+            <div class="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h2 class="font-semibold text-gray-700">2. 読み取り結果</h2>
+                <!-- コピーボタン -->
+                <button id="copyBtn" class="hidden text-sm text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 bg-blue-50 px-3 py-1 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    コピー
+                </button>
+            </div>
 
-  <div id="cameraContainer">
-    <video id="video" autoplay playsinline></video>
+            <!-- ステータス・プログレス表示 -->
+            <div id="loadingIndicator" class="hidden flex-col items-center justify-center p-8 h-64">
+                <div class="loader mb-4"></div>
+                <p id="statusText" class="text-sm text-gray-600 font-medium mb-2">準備中...</p>
+                <!-- プログレスバー -->
+                <div class="w-full max-w-xs bg-gray-200 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
 
-    <div id="zoomAreaCamera">
-      <div id="zoomLabelCamera" class="zoomLabel">1.2x</div>
-      <input id="zoomSliderCamera" class="zoomSlider" type="range" min="1" max="5" step="0.1" value="1.2">
+            <!-- エラーメッセージ表示 -->
+            <div id="errorMessage" class="hidden p-4 m-4 bg-red-50 text-red-700 rounded-xl border border-red-200 text-sm">
+            </div>
+
+            <!-- テキスト出力領域 -->
+            <textarea id="resultText" class="w-full h-64 md:h-full p-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-gray-700 leading-relaxed bg-transparent" placeholder="ここに読み取ったテキストが表示されます。" readonly></textarea>
+        </div>
     </div>
-  </div>
-
-  <canvas id="canvas" style="display:none;"></canvas>
-</div>
-<div class="card">
-  <h2>③ ファイルから読み込む</h2>
-  <input type="file" id="fileInput" accept=".jpg,.jpeg,.png">
-  <button id="loadFile" class="secondary">画像ファイルをOCR</button>
-</div>
-
-<div class="card">
-  <h2>④ 履歴管理</h2>
-
-  <!-- 検索＆ソート -->
-  <input id="historySearch" placeholder="履歴を検索（ファイル名・会社名・テキスト・日付）">
-  <select id="historySort">
-    <option value="date_desc">日付（新しい順）</option>
-    <option value="date_asc">日付（古い順）</option>
-    <option value="name">ファイル名順</option>
-    <option value="company">会社名順</option>
-  </select>
-
-  <button id="showHistory" class="secondary">履歴を表示</button>
-  <button id="downloadZip" class="secondary">ZIP（写真＋OCR全文）をダウンロード</button>
-
-  <!-- バックアップ／復元 -->
-  <button id="backupHistory" class="secondary">履歴をバックアップ（JSON）</button>
-  <input type="file" id="restoreFileInput" accept=".json" style="margin-top:8px;">
-  <button id="restoreHistory" class="secondary">履歴を復元（JSON）</button>
-
-  <div id="history"></div>
-</div>
-
-<!-- 撮影後プレビュー -->
-<div id="previewArea">
-  <div id="previewContainer">
-    <img id="previewImage">
-
-    <!-- プレビュー時のズームUI -->
-    <div id="zoomAreaPreview">
-      <div id="zoomLabelPreview" class="zoomLabel">1.2x</div>
-      <input id="zoomSliderPreview" class="zoomSlider" type="range" min="1" max="5" step="0.1" value="1.2">
+    
+    <!-- トースト通知 (コピー完了時など) -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+        メッセージ
     </div>
-  </div>
-
-  <div id="previewButtons">
-    <button id="doCrop" style="background:#1976d2;color:#fff;">OCRする</button>
-    <button id="cancelPreview" class="danger">キャンセル</button>
-  </div>
 </div>
 
-<!-- OCR編集ボトムシート -->
-<div id="editOverlay">
+<script>
+    // DOM要素の取得
+    const imageInput = document.getElementById('imageInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const startOcrBtn = document.getElementById('startOcrBtn');
+    
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const statusText = document.getElementById('statusText');
+    const progressBar = document.getElementById('progressBar');
+    
+    const resultText = document.getElementById('resultText');
+    const copyBtn = document.getElementById('copyBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    const toast = document.getElementById('toast');
 
-  <!-- ファイル名 -->
-  <input id="fileNameInput"
-         placeholder="ファイル名（例：20260516_会社名）"
-         style="padding:10px;font-size:16px;margin-bottom:8px;border-radius:8px;border:1px solid #ccc;">
+    let currentFile = null;
 
-  <!-- 会社名 -->
-  <input id="companyInput"
-         placeholder="会社名（例：安楽寺）"
-         style="padding:10px;font-size:16px;margin-bottom:8px;border-radius:8px;border:1px solid #ccc;">
+    // 1. 画像が選択されたときの処理
+    imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-  <textarea id="editText"></textarea>
+        currentFile = file;
 
-  <button id="confirmEdit" style="background:#1976d2;color:#fff;">確定して履歴に保存</button>
-  <button id="cancelEdit" class="danger">キャンセル</button>
-</div>
+        // エラー等の状態をリセット
+        hideError();
+        resultText.value = '';
+        copyBtn.classList.add('hidden');
+        
+        // 画像プレビューの表示
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            imagePreview.src = event.target.result;
+            previewContainer.classList.remove('hidden');
+            startOcrBtn.disabled = false; // 実行ボタンを有効化
+            startOcrBtn.classList.remove('bg-gray-300');
+            startOcrBtn.classList.add('bg-blue-600');
+        };
+        reader.readAsDataURL(file);
+    });
 
-<script src="app.js"></script>
+    // 2. 読み取りボタンが押されたときの処理
+    startOcrBtn.addEventListener('click', async () => {
+        if (!currentFile) return;
+
+        // UIをローディング状態に切り替え
+        startOcrBtn.disabled = true;
+        imageInput.disabled = true;
+        resultText.classList.add('hidden');
+        copyBtn.classList.add('hidden');
+        loadingIndicator.classList.remove('hidden');
+        loadingIndicator.classList.add('flex');
+        hideError();
+        progressBar.style.width = '0%';
+
+        try {
+            // Tesseract.jsでOCR処理を実行
+            // 'jpn+eng' で日本語と英語（数字やアルファベット）の両方を認識させます
+            const result = await Tesseract.recognize(
+                currentFile,
+                'jpn+eng',
+                {
+                    // loggerコールバックで進捗状況を取得
+                    logger: m => {
+                        console.log(m);
+                        if (m.status === 'recognizing text') {
+                            statusText.textContent = `テキストを抽出中... ${Math.round(m.progress * 100)}%`;
+                            progressBar.style.width = `${m.progress * 100}%`;
+                        } else if (m.status === 'loading tesseract core') {
+                            statusText.textContent = 'OCRエンジンを準備中...';
+                        } else if (m.status === 'loading language traineddata' || m.status === 'loaded language traineddata') {
+                            statusText.textContent = '日本語辞書データを読み込み中... (初回は時間がかかります)';
+                        } else if (m.status === 'initializing api') {
+                            statusText.textContent = '初期化中...';
+                        }
+                    }
+                }
+            );
+
+            // 成功時の処理
+            const extractedText = result.data.text;
+            
+            if (extractedText.trim() === '') {
+                showError('文字を検出できませんでした。別の画像をお試しください。');
+            } else {
+                resultText.value = extractedText;
+                resultText.classList.remove('hidden');
+                copyBtn.classList.remove('hidden');
+            }
+
+        } catch (error) {
+            // 失敗時の処理
+            console.error("OCR処理エラー:", error);
+            showError(`OCR処理に失敗しました: ${error.message || '不明なエラー'}`);
+        } finally {
+            // UIを元の状態に戻す
+            loadingIndicator.classList.add('hidden');
+            loadingIndicator.classList.remove('flex');
+            resultText.classList.remove('hidden'); // エラー時でもテキストエリアは表示しておく
+            startOcrBtn.disabled = false;
+            imageInput.disabled = false;
+        }
+    });
+
+    // コピーボタンの処理
+    copyBtn.addEventListener('click', () => {
+        if (!resultText.value) return;
+
+        resultText.select();
+        try {
+            // 互換性のため execCommand を使用
+            document.execCommand('copy');
+            showToast('テキストをコピーしました！');
+        } catch (err) {
+            showError('コピーに失敗しました。');
+        }
+        // 選択状態を解除
+        window.getSelection().removeAllRanges();
+    });
+
+    // エラーメッセージの表示
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorMessage.classList.remove('hidden');
+    }
+
+    // エラーメッセージを隠す
+    function hideError() {
+        errorMessage.classList.add('hidden');
+        errorMessage.textContent = '';
+    }
+
+    // トースト通知を表示する
+    function showToast(message) {
+        toast.textContent = message;
+        toast.classList.remove('translate-y-20', 'opacity-0');
+        
+        setTimeout(() => {
+            toast.classList.add('translate-y-20', 'opacity-0');
+        }, 3000);
+    }
+</script>
 </body>
 </html>
