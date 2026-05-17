@@ -318,8 +318,8 @@ async function ocrBase64(base64) {
         body: JSON.stringify({
           requests: [
             {
-              image: { content: base64 },
-              features: [{ type: "DOCUMENT_TEXT_DETECTION" }],
+              image: { content: base64Image },
+              features: [{ type: "TEXT_DETECTION" }],
               imageContext: { languageHints: ["ja"] }
             }
           ]
