@@ -56,7 +56,6 @@
     border: 1px solid #ccc;
   }
 
-  /* カメラコンテナ（ズームUIの基準） */
   #cameraContainer {
     position: relative;
     width: 100%;
@@ -68,7 +67,6 @@
     background: #000;
   }
 
-  /* カメラ時のズームUI（初期は完全非表示） */
   #zoomAreaCamera {
     position:absolute;
     top:10px;
@@ -82,7 +80,6 @@
     align-items:center;
   }
 
-  /* プレビュー時のズームUI（初期は完全非表示） */
   #zoomAreaPreview {
     position:absolute;
     top:10px;
@@ -113,7 +110,6 @@
     height: 180px;
   }
 
-  /* プレビュー全画面 */
   #previewArea {
     display: none;
     position: fixed;
@@ -129,7 +125,7 @@
     position: relative;
     width: 100%;
     height: 100%;
-    padding-bottom: 120px; /* ← Cropper とボタンの重なり防止 */
+    padding-bottom: 120px;
   }
 
   #previewImage {
@@ -149,7 +145,6 @@
     box-sizing: border-box;
   }
 
-  /* 履歴 */
   .history-item {
     margin-bottom: 16px;
     padding: 8px;
@@ -166,7 +161,6 @@
     margin-top: 4px;
   }
 
-  /* 編集ボトムシート */
   #editOverlay {
     position: fixed;
     left: 0;
@@ -196,9 +190,6 @@
     white-space: pre-wrap;
   }
 
-  /* ============================
-     ★ トリミングハンドル大型化
-     ============================ */
   .cropper-point {
     width: 40px !important;
     height: 40px !important;
@@ -208,7 +199,6 @@
     opacity: 1 !important;
   }
 
-  /* タップ判定拡大 */
   .cropper-point::after {
     content: "";
     position: absolute;
@@ -218,13 +208,11 @@
     height: 80px;
   }
 
-  /* 枠線を太くして視認性UP */
   .cropper-crop-box,
   .cropper-view-box {
     border: 3px solid #1976d2 !important;
   }
 
-  /* ガイド線を薄く */
   .cropper-dashed {
     border-color: rgba(255,255,255,0.4) !important;
   }
@@ -252,7 +240,6 @@
   <div id="cameraContainer">
     <video id="video" autoplay playsinline></video>
 
-    <!-- カメラ時のズームUI -->
     <div id="zoomAreaCamera">
       <div id="zoomLabelCamera" class="zoomLabel">1.2x</div>
       <input id="zoomSliderCamera" class="zoomSlider" type="range" min="1" max="5" step="0.1" value="1.2">
@@ -288,7 +275,6 @@
   <button id="restoreHistory" class="secondary">履歴を復元（JSON）</button>
 
   <div id="history"></div>
-  <div id="errorLog" style="white-space:pre-wrap;color:#d32f2f;font-size:14px;margin-top:10px;"></div>
 </div>
 
 <!-- 撮影後プレビュー -->

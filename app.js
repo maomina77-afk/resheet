@@ -328,16 +328,6 @@ async function ocrBase64(base64) {
     );
 
     const data = await response.json();
-    
-    document.getElementById("errorLog").textContent =
-  "Vision API response:\n" + JSON.stringify(data, null, 2);
-
- 
-}
-  
-    
-    
-    
     if (!data.responses || !data.responses[0].fullTextAnnotation) {
       alert("OCRに失敗しました。");
       beep(false);
@@ -354,13 +344,10 @@ async function ocrBase64(base64) {
     openEditOverlay(text);
     beep(true);
 
-} catch (e) {
-  document.getElementById("errorLog").textContent =
-    "Fetch error:\n" + e.message;
-  alert("通信エラー: " + e.message);
-  beep(false);
-}
- finally {
+  } catch (e) {
+    alert("通信エラー: " + e.message);
+    beep(false);
+  } finally {
     setOcrBusy(false);
   }
 }
