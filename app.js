@@ -332,11 +332,7 @@ async function ocrBase64(base64) {
     document.getElementById("errorLog").textContent =
   "Vision API response:\n" + JSON.stringify(data, null, 2);
 
-  } catch (e) {
-  document.getElementById("errorLog").textContent =
-    "Fetch error:\n" + e.message;
-  alert("通信エラー: " + e.message);
-  beep(false);
+ 
 }
   
     
@@ -358,10 +354,13 @@ async function ocrBase64(base64) {
     openEditOverlay(text);
     beep(true);
 
-  } catch (e) {
-    alert("通信エラー: " + e.message);
-    beep(false);
-  } finally {
+} catch (e) {
+  document.getElementById("errorLog").textContent =
+    "Fetch error:\n" + e.message;
+  alert("通信エラー: " + e.message);
+  beep(false);
+}
+ finally {
     setOcrBusy(false);
   }
 }
