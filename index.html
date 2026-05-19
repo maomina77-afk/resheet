@@ -513,6 +513,10 @@
             modalTextarea.value = text;
             textCurrentScale = 1;
             modalTextarea.style.fontSize = `${baseFontSize}px`;
+            
+            // 行間をフォントサイズに対して常に1.5倍に設定（重なり防止）
+            modalTextarea.style.lineHeight = '1.5'; 
+            
             textModal.classList.remove('hidden');
         }
 
