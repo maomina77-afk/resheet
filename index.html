@@ -229,7 +229,7 @@
                 historyData.forEach((item, index) => {
                     const folder = zip.folder(`receipt_${item.date.replace(/[\/\s:]/g, '-')}_${index + 1}`);
                     folder.file("image.jpg", item.image.split(',')[1], {base64: true});
-                    folder.file("text.txt", item.text);
+                    folder.file("text.txt", item.text || "");
                 });
                 const blob = await zip.generateAsync({ type: "blob" }); const url = URL.createObjectURL(blob); const a = document.createElement('a');
                 a.href = url; a.download = `receipt_export_${new Date().toISOString().slice(0,10)}.zip`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
@@ -291,7 +291,7 @@
                 const text = data.responses[0]?.fullTextAnnotation?.text || "文字が検出されませんでした。";
                 resultText.value = text; resultArea.classList.remove('hidden'); previewArea.classList.add('hidden');
                 await saveToHistory(currentImageBase64, text);
-            } catch (err) { showError("読み取り失敗: " + err.message); if (err.message.includes('API_KEY_INVALID')) showSetupArea(); } finally { hideLoading(); }
+            } catch (err) { showError("読み取り失敗: " + err.message); if (err.message?.includes('API_KEY_INVALID')) showSetupArea(); } finally { hideLoading(); }
         });
 
         async function saveToHistory(imgBase64, text) {
@@ -319,7 +319,8 @@
             const filteredData = historyData.filter(item => {
                 const group = item.group || '1';
                 const matchGroup = (currentGroupFilter === 'all' || group === currentGroupFilter);
-                const matchKeyword = !searchTerm || item.text.toLowerCase().includes(searchTerm);
+                const itemText = item.text || "";
+                const matchKeyword = !searchTerm || itemText.toLowerCase().includes(searchTerm);
                 return matchGroup && matchKeyword;
             });
 
@@ -351,7 +352,7 @@
                             </div>
                         </div>
                         <div class="prevent-os-menu col-span-3 p-3 overflow-y-auto cursor-pointer active:bg-gray-50 transition relative" id="text-container-${item.id}">
-                            <p class="whitespace-pre-wrap text-sm text-gray-700 font-mono pointer-events-none">${escapeHtml(item.text)}</p>
+                            <p class="whitespace-pre-wrap text-sm text-gray-700 font-mono pointer-events-none">${escapeHtml(item.text || "")}</p>
                         </div>
                     </div>
                     <div class="bg-gray-100 text-[11px] text-gray-500 text-center py-1 border-t tracking-wider">
@@ -360,7 +361,7 @@
                 `;
                 historyList.appendChild(card);
                 addLongPressListener(document.getElementById(`img-container-${item.id}`), () => openImageModal(item.image));
-                addLongPressListener(document.getElementById(`text-container-${item.id}`), () => openTextModal(item.id, item.text));
+                addLongPressListener(document.getElementById(`text-container-${item.id}`), () => openTextModal(item.id, item.text || ""));
             });
         }
 
@@ -395,7 +396,6 @@
         function getDistance(touches) { const dx = touches[0].clientX - touches[1].clientX, dy = touches[0].clientY - touches[1].clientY; return Math.sqrt(dx * dx + dy * dy); }
 
         // --- 画像拡大表示 (ピンチ ＆ ドラッグ移動対応) ---
-        const imageModal = document.getElementById('image-modal'), modalImage = document.getElementById('modal-image');
         let imgCurrentScale = 1, imgStartScale = 1, initialDistance = 0;
         let imgCurrentX = 0, imgCurrentY = 0, lastTouchX = 0, lastTouchY = 0, isDragging = false;
 
