@@ -455,4 +455,33 @@
         saveTextBtn.addEventListener('click', async () => {
             if (editingHistoryId) {
                 const itemIndex = historyData.findIndex(item => item.id === editingHistoryId);
-                if (itemIndex !== -1
+                if (itemIndex !== -1) {
+                    historyData[itemIndex].text = modalTextarea.value;
+                    await localforage.setItem('receiptHistory', historyData);
+                    renderHistory(); 
+                }
+            }
+            closeTextModal();
+        });
+        modalTextarea.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) { textInitialDistance = getDistance(e.touches); textStartScale = textCurrentScale; }
+        }, { passive: false });
+        modalTextarea.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2) {
+                e.preventDefault();
+                textCurrentScale = Math.min(Math.max(0.8, textStartScale * (getDistance(e.touches) / textInitialDistance)), 3.5);
+                modalTextarea.style.fontSize = `${baseFontSize * textCurrentScale}px`;
+            }
+        }, { passive: false });
+
+        // --- ユーティリティ ---
+        document.getElementById('copy-btn').addEventListener('click', () => {
+            resultText.select(); document.execCommand('copy');
+            const btn = document.getElementById('copy-btn');
+            const originalText = btn.textContent; btn.textContent = 'コピー完了！';
+            setTimeout(() => btn.textContent = originalText, 2000);
+        });
+        function escapeHtml(unsafe) { return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
+    </script>
+</body>
+</html>
