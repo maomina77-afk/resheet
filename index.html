@@ -8,6 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .loader {
@@ -47,11 +48,23 @@
             
             <hr class="my-6 border-gray-200">
             
-            <h2 class="text-lg font-bold mb-2">データのバックアップ</h2>
-            <p class="text-sm text-gray-600 mb-4">保存されている履歴データ（画像とテキスト）をダウンロードします。</p>
-            <button id="backup-btn" class="w-full bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg shadow hover:bg-indigo-600 transition flex justify-center items-center gap-2">
-                <span>📥</span> 履歴データをダウンロード
-            </button>
+            <h2 class="text-lg font-bold mb-2">データのバックアップ・復元</h2>
+            <p class="text-sm text-gray-600 mb-4">データの書き出しや、過去のバックアップの復元ができます。</p>
+            
+            <div class="space-y-3">
+                <button id="backup-btn" class="w-full bg-blue-50 text-blue-700 border border-blue-200 font-bold py-3 px-4 rounded-lg shadow-sm hover:bg-blue-100 transition flex justify-center items-center gap-2">
+                    <span>📥</span> データのみバックアップ (JSON)
+                </button>
+                
+                <input type="file" id="restore-input" accept=".json" class="hidden">
+                <button id="restore-btn" class="w-full bg-green-50 text-green-700 border border-green-200 font-bold py-3 px-4 rounded-lg shadow-sm hover:bg-green-100 transition flex justify-center items-center gap-2">
+                    <span>📤</span> バックアップを復元 (JSON)
+                </button>
+
+                <button id="zip-btn" class="w-full bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg shadow hover:bg-indigo-600 transition flex justify-center items-center gap-2 mt-2">
+                    <span>📦</span> 画像・テキストをZIPで保存
+                </button>
+            </div>
 
             <button id="cancel-settings-btn" class="hidden w-full mt-6 bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg shadow hover:bg-gray-300 transition">設定画面を閉じる</button>
         </section>
@@ -154,6 +167,9 @@
         const apiKeyInput = document.getElementById('api-key-input');
         const saveKeyBtn = document.getElementById('save-key-btn');
         const backupBtn = document.getElementById('backup-btn');
+        const restoreBtn = document.getElementById('restore-btn');
+        const restoreInput = document.getElementById('restore-input');
+        const zipBtn = document.getElementById('zip-btn');
         const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
         const navSettingsBtn = document.getElementById('nav-settings-btn');
 
@@ -222,35 +238,62 @@
             } catch (err) { showError("APIキーの保存に失敗しました。"); }
         });
 
-        // --- バックアップ機能 ---
+        // --- データ復元機能 (JSON) ---
+        restoreBtn.addEventListener('click', () => {
+            restoreInput.click();
+        });
+
+        restoreInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const parsedData = JSON.parse(text);
+                
+                if (Array.isArray(parsedData)) {
+                    // 既存データとIDが重複しないようにマージする
+                    const existingIds = new Set(historyData.map(item => item.id));
+                    const newItems = parsedData.filter(item => item.id && !existingIds.has(item.id));
+                    
+                    historyData = [...newItems, ...historyData];
+                    // データ容量を守るため、復元時も上限を適用 (必要に応じて50件などに調整)
+                    if (historyData.length > 50) historyData = historyData.slice(0, 50);
+                    
+                    await localforage.setItem('receiptHistory', historyData);
+                    renderHistory();
+                    
+                    const originalHTML = restoreBtn.innerHTML;
+                    restoreBtn.innerHTML = '<span>✅</span> 復元完了！';
+                    setTimeout(() => restoreBtn.innerHTML = originalHTML, 2000);
+                } else {
+                    showError("無効なバックアップファイルです。");
+                }
+            } catch (err) {
+                showError("ファイルの読み込みに失敗しました。");
+            } finally {
+                restoreInput.value = ''; // 選択状態をリセット
+            }
+        });
+
+        // --- バックアップ機能 (JSON) ---
         backupBtn.addEventListener('click', async () => {
             try {
                 if (!historyData || historyData.length === 0) {
-                    showError("バックアップする履歴データがありません。");
-                    return;
+                    showError("バックアップする履歴データがありません。"); return;
                 }
-
-                // JSON文字列に変換
                 const jsonStr = JSON.stringify(historyData, null, 2);
-                
-                // Blobを作成
                 const blob = new Blob([jsonStr], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
-                
-                // ダウンロード用リンクを一時的に生成してクリック
                 const a = document.createElement('a');
                 a.href = url;
-                // ファイル名に今日の日付を入れる
                 const dateString = new Date().toISOString().slice(0,10);
                 a.download = `receipt_backup_${dateString}.json`;
                 document.body.appendChild(a);
                 a.click();
-                
-                // 後処理
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
 
-                // ボタンのテキストを一時的に変更
                 const originalHTML = backupBtn.innerHTML;
                 backupBtn.innerHTML = '<span>✅</span> ダウンロード完了！';
                 setTimeout(() => backupBtn.innerHTML = originalHTML, 2000);
@@ -259,6 +302,51 @@
             }
         });
 
+        // --- ZIPで保存機能 (画像＋テキスト) ---
+        zipBtn.addEventListener('click', async () => {
+            if (!historyData || historyData.length === 0) {
+                showError("保存する履歴データがありません。");
+                return;
+            }
+            showLoading("ZIPファイルを作成中...");
+            try {
+                const zip = new JSZip();
+                historyData.forEach((item, index) => {
+                    // 日付の文字列をファイル名で使える安全な文字に変換
+                    const safeDate = item.date.replace(/[\/\s:]/g, '-');
+                    const folderName = `receipt_${safeDate}_${index + 1}`;
+                    const folder = zip.folder(folderName);
+                    
+                    // base64のヘッダー("data:image/jpeg;base64,")を除去
+                    const base64Data = item.image.split(',')[1];
+                    
+                    folder.file("image.jpg", base64Data, {base64: true});
+                    folder.file("text.txt", item.text);
+                });
+
+                const blob = await zip.generateAsync({ type: "blob" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const dateString = new Date().toISOString().slice(0,10);
+                a.download = `receipt_export_${dateString}.zip`;
+                
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                const originalHTML = zipBtn.innerHTML;
+                zipBtn.innerHTML = '<span>✅</span> ZIP作成完了！';
+                setTimeout(() => zipBtn.innerHTML = originalHTML, 2000);
+            } catch (err) {
+                showError("ZIPファイルの作成に失敗しました。");
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // --- カメラ・画像処理 ---
         cameraBtn.addEventListener('click', () => { imageInput.setAttribute('capture', 'environment'); imageInput.click(); });
         fileBtn.addEventListener('click', () => { imageInput.removeAttribute('capture'); imageInput.click(); });
 
@@ -306,32 +394,21 @@
         function openCropModal(base64Image) {
             cropImage.src = base64Image;
             cropModal.classList.remove('hidden');
-            
             if (cropper) cropper.destroy();
-            
             setTimeout(() => {
-                cropper = new Cropper(cropImage, {
-                    viewMode: 1,
-                    autoCropArea: 0.9,
-                    background: false,
-                    dragMode: 'move',
-                    guides: true,
-                });
+                cropper = new Cropper(cropImage, { viewMode: 1, autoCropArea: 0.9, background: false, dragMode: 'move', guides: true, });
             }, 50);
         }
 
         applyCropBtn.addEventListener('click', () => {
             if (!cropper) return;
             showLoading('トリミング中...');
-            
             setTimeout(() => {
                 const canvas = cropper.getCroppedCanvas({ maxWidth: 1200, maxHeight: 1200 });
                 currentImageBase64 = canvas.toDataURL('image/jpeg', 0.8);
-                
                 cropModal.classList.add('hidden');
                 cropper.destroy();
                 cropper = null;
-                
                 previewImg.src = currentImageBase64;
                 previewArea.classList.remove('hidden');
                 hideLoading();
@@ -380,7 +457,8 @@
         async function saveToHistory(imgBase64, text) {
             const newItem = { id: Date.now().toString(), date: new Date().toLocaleString('ja-JP'), image: imgBase64, text: text };
             historyData.unshift(newItem);
-            if (historyData.length > 30) historyData = historyData.slice(0, 30);
+            // 履歴上限（復元時の余力も考慮して50件に拡張しています）
+            if (historyData.length > 50) historyData = historyData.slice(0, 50);
             try { await localforage.setItem('receiptHistory', historyData); renderHistory(); } catch (err) { console.error("履歴保存失敗", err); }
         }
 
