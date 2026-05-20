@@ -44,7 +44,16 @@
             <p class="text-sm text-gray-600 mb-4">文字を高精度で読み取るためにAPIキーが必要です。</p>
             <input type="text" id="api-key-input" placeholder="AIzaSy..." class="w-full border border-gray-300 p-3 rounded mb-4 focus:ring-2 focus:ring-blue-500 outline-none">
             <button id="save-key-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg shadow hover:bg-blue-700 transition">APIキーを保存する</button>
-            <button id="cancel-settings-btn" class="hidden w-full mt-3 bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg shadow hover:bg-gray-300 transition">キャンセル</button>
+            
+            <hr class="my-6 border-gray-200">
+            
+            <h2 class="text-lg font-bold mb-2">データのバックアップ</h2>
+            <p class="text-sm text-gray-600 mb-4">保存されている履歴データ（画像とテキスト）をダウンロードします。</p>
+            <button id="backup-btn" class="w-full bg-indigo-500 text-white font-bold py-3 px-4 rounded-lg shadow hover:bg-indigo-600 transition flex justify-center items-center gap-2">
+                <span>📥</span> 履歴データをダウンロード
+            </button>
+
+            <button id="cancel-settings-btn" class="hidden w-full mt-6 bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-lg shadow hover:bg-gray-300 transition">設定画面を閉じる</button>
         </section>
 
         <section id="main-area" class="hidden">
@@ -144,6 +153,7 @@
         
         const apiKeyInput = document.getElementById('api-key-input');
         const saveKeyBtn = document.getElementById('save-key-btn');
+        const backupBtn = document.getElementById('backup-btn');
         const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
         const navSettingsBtn = document.getElementById('nav-settings-btn');
 
@@ -201,6 +211,7 @@
 
         navSettingsBtn.addEventListener('click', () => { apiKeyInput.value = ''; showSetupArea(); });
         cancelSettingsBtn.addEventListener('click', () => { apiKeyInput.value = ''; showMainArea(); });
+        
         saveKeyBtn.addEventListener('click', async () => {
             const val = apiKeyInput.value.trim();
             if (!val && apiKey) return showMainArea();
@@ -209,6 +220,43 @@
                 await localforage.setItem('visionApiKey', val);
                 apiKey = val; apiKeyInput.placeholder = '【＊＊＊＊＊＊】変更する場合のみ入力'; apiKeyInput.value = ''; showMainArea();
             } catch (err) { showError("APIキーの保存に失敗しました。"); }
+        });
+
+        // --- バックアップ機能 ---
+        backupBtn.addEventListener('click', async () => {
+            try {
+                if (!historyData || historyData.length === 0) {
+                    showError("バックアップする履歴データがありません。");
+                    return;
+                }
+
+                // JSON文字列に変換
+                const jsonStr = JSON.stringify(historyData, null, 2);
+                
+                // Blobを作成
+                const blob = new Blob([jsonStr], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                
+                // ダウンロード用リンクを一時的に生成してクリック
+                const a = document.createElement('a');
+                a.href = url;
+                // ファイル名に今日の日付を入れる
+                const dateString = new Date().toISOString().slice(0,10);
+                a.download = `receipt_backup_${dateString}.json`;
+                document.body.appendChild(a);
+                a.click();
+                
+                // 後処理
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // ボタンのテキストを一時的に変更
+                const originalHTML = backupBtn.innerHTML;
+                backupBtn.innerHTML = '<span>✅</span> ダウンロード完了！';
+                setTimeout(() => backupBtn.innerHTML = originalHTML, 2000);
+            } catch (err) {
+                showError("バックアップの作成に失敗しました。");
+            }
         });
 
         cameraBtn.addEventListener('click', () => { imageInput.setAttribute('capture', 'environment'); imageInput.click(); });
@@ -223,7 +271,6 @@
             previewArea.classList.add('hidden');
             
             try {
-                // 初期圧縮（巨大な画像をトリミング画面で扱えるように）
                 const base64 = await compressImage(file, 1500);
                 openCropModal(base64);
                 imageInput.value = '';
@@ -262,7 +309,6 @@
             
             if (cropper) cropper.destroy();
             
-            // 少し遅延させないと画像コンテナのサイズが計算されない場合がある
             setTimeout(() => {
                 cropper = new Cropper(cropImage, {
                     viewMode: 1,
@@ -295,9 +341,8 @@
         cancelCropBtn.addEventListener('click', () => {
             cropModal.classList.add('hidden');
             if (cropper) { cropper.destroy(); cropper = null; }
-            currentImageBase64 = ''; // キャンセル時はリセット
+            currentImageBase64 = ''; 
         });
-
 
         // --- Vision API ---
         scanBtn.addEventListener('click', async () => {
@@ -395,7 +440,6 @@
             const start = (e) => {
                 if (e.type === 'mousedown' && e.button !== 0) return;
                 if (e.type === 'touchstart') { startX = e.touches[0].clientX; startY = e.touches[0].clientY; }
-                // 長押し判定を 450ms から 200ms に短縮
                 pressTimer = setTimeout(() => { callback(e); }, 200); 
             };
             const move = (e) => {
